@@ -935,14 +935,16 @@ Public Class Serializer
                 Dim key = DeserializeValue(context, GetType(Object), value, delimiter).ToString().Trim(""""c)
 
                 ReadUntilNextDelimiter(context.Stream, value, delimiter)
+                
+                Dim valType As Type = GetType(Object)
+                If targetType IsNot Nothing Then
+                    Dim valProp = targetType.GetProperty(key)
 
-                Dim valProp = targetType.GetProperty(key)
-                Dim valType As Type
-                If valProp IsNot Nothing Then
-                    valType = valProp.PropertyType
-                Else
-                    valType = GetType(Object)
+                    If valProp IsNot Nothing Then
+                        valType = valProp.PropertyType
+                    End If
                 End If
+
                 Dim val = DeserializeStream(context, valType, value, delimiter)
 
                 Try
