@@ -626,7 +626,8 @@ Public Class Serializer
 
     Friend Shared Function TryTransformHashTable(ByVal context As DeserializationContext,
                                                  ByVal resultObj As Object, ByVal prop As System.ComponentModel.PropertyDescriptor,
-                                                 ByVal val As Object, ByVal targetType As Type) As Object
+                                                 ByVal val As Object, ByVal targetType As Type,
+                                                 ByVal index As Integer) As Object
 
         Dim eVal = TransformHashTable(DirectCast(val, Collections.Hashtable), targetType, False, resultObj, prop, context)
         ' eVal is Nothing means that this is a reference which has not yet been resolved. Store for later.
@@ -636,7 +637,7 @@ Public Class Serializer
                 context.ReferencesToResolve.Add(New ReferenceToResolve(resultObj,
                                                                        prop,
                                                                        DirectCast(val, Collections.Hashtable)("$ref").ToString(),
-                                                                       -1,
+                                                                       index,
                                                                        targetType,
                                                                        AddressOf DefaultReferenceResolver))
             Catch ex As Exception
@@ -729,7 +730,7 @@ Public Class Serializer
             val = val.ToString()
 
         ElseIf TypeOf val Is Hashtable Then
-            Dim eVal = TryTransformHashTable(context, resultObj, prop, val, propType)
+            Dim eVal = TryTransformHashTable(context, resultObj, prop, val, propType, -1)
             ' eVal is Nothing means that this is a reference which has not yet been resolved. Store for later.
             If eVal IsNot Nothing AndAlso propType.IsAssignableFrom(eVal.GetType()) Then
                 val = eVal
@@ -885,7 +886,7 @@ Public Class Serializer
                 Try
                     Dim val = arrayList(j)
                     If Not targetType.GetElementType() Is GetType(Object) AndAlso TypeOf val Is Hashtable Then
-                        val = TryTransformHashTable(context, arrInst, Nothing, val, targetType.GetElementType())
+                        val = TryTransformHashTable(context, arrInst, Nothing, val, targetType.GetElementType(), j)
 
                         ' val is Nothing means that this is a reference which has not yet been resolved. Store for later.
                         If val IsNot Nothing Then arrInst.SetValue(val, j)
