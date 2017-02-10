@@ -398,9 +398,7 @@ Public Class Serializer
             If context.Serializer.AdvancedSerialization Then
                 Dim serializedObjDict As Dictionary(Of Object, Object) = Nothing
                 If context.SerializedObjects.TryGetValue(obj.GetType, serializedObjDict) Then
-                    serializedGuid = (From so In serializedObjDict
-                                      Where Object.Equals(so.Key, obj)
-                                      Select so.Value).FirstOrDefault
+                    serializedObjDict.TryGetValue(obj, serializedGuid)
                 End If
             End If
 
