@@ -324,6 +324,7 @@ Public Class Serializer
                                                      props(i).Name,
                                                      ex)
                 End Try
+				
             Next            
 
             Dim eAfterSerialize = New AfterSerializeObjectEventArgs(obj, type, hashTable, context)
@@ -436,9 +437,9 @@ Public Class Serializer
 
             ' And actual Deserialization
             resultObj = DeserializeStream(context, GetType(T), Nothing, Nothing)
-            If TypeOf resultObj Is Hashtable Then
-                resultObj = TransformHashTable(DirectCast(resultObj, Hashtable), GetType(T), GetType(T) IsNot GetType(Object), Nothing, Nothing, context)
-            End If
+
+            ' Use targetType (T) to try to transform the current object
+            resultObj = TransformDeserializedString(context, Nothing, GetType(T), Nothing, resultObj)
 
             ' Resolve previously unresolved references (if possible)
             Dim lastUnresolvedReferencesCount As Integer
@@ -673,16 +674,11 @@ Public Class Serializer
         Return Nothing
     End Function
 
-    Private Shared Sub SetProperty(ByVal context As DeserializationContext,
-                                   ByRef resultObj As Object,
-                                   ByVal prop As System.ComponentModel.PropertyDescriptor,
-                                   ByVal val As Object)
-
-        Dim propType = prop.PropertyType
-
-        If propType.IsGenericType AndAlso propType.GetGenericTypeDefinition() Is GetType(Nullable(Of )) Then
-            propType = prop.PropertyType.GetGenericArguments().FirstOrDefault
-        End If
+    Private Shared Function TransformDeserializedString(ByVal context As DeserializationContext,
+                                                        ByRef resultObj As Object,
+                                                        Byval propType As Type,
+                                                        ByVal prop As System.ComponentModel.PropertyDescriptor,
+                                                        ByVal val As Object) As Object
 
         If val Is Nothing Then
             ' Save the object as is
@@ -700,7 +696,8 @@ Public Class Serializer
             val = CByte(ParseNumber(val))
 
         ElseIf propType Is GetType([Enum]) Then
-            val = CInt(ParseNumber(val))
+            Dim genericType = Nullable.GetUnderlyingType(prop.PropertyType)
+            val = [Enum].ToObject(genericType, CInt(ParseNumber(val)))
 
         ElseIf propType Is GetType(Double) Then
             val = CDbl(ParseNumber(val))
@@ -743,9 +740,29 @@ Public Class Serializer
 
         End If
 
+        Return val
+
+    End Function
+
+    Private Shared Sub SetProperty(ByVal context As DeserializationContext,
+                                   ByRef resultObj As Object,
+                                   ByVal prop As System.ComponentModel.PropertyDescriptor,
+                                   ByVal val As Object)
+
+        Dim propType = prop.PropertyType
+
+        Dim typeName = propType.AssemblyQualifiedName
+
+        If propType.IsGenericType AndAlso propType.GetGenericTypeDefinition() Is GetType(Nullable(Of )) Then
+            propType = prop.PropertyType.GetGenericArguments().FirstOrDefault
+        End If
+
+        val = TransformDeserializedString(context, resultObj, propType, prop, val)
+
         Dim eh As New HydrateObjectEventArgs(resultObj, val, prop, context)
         context.Serializer.DoHydrateObject(eh)
         If Not eh.Handled AndAlso (val Is Nothing OrElse propType.IsValueType OrElse propType.IsAssignableFrom(val.GetType())) Then
+            ' The user may choose to do their own transformation and skip setting entirely
             Dim e As New TransformObjectEventArgs(resultObj, val)
             context.Serializer.DoTransformObject(e)
             If e.Handled Then val = e.Val
@@ -784,7 +801,7 @@ Public Class Serializer
             End Select
         End If
     End Sub
-
+	
     Private Shared Sub SetPropertyValue(prop As ComponentModel.PropertyDescriptor, obj As Object, val As Object)
         prop.SetValue(obj, val)
     End Sub
