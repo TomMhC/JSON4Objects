@@ -324,8 +324,8 @@ Public Class Serializer
                                                      props(i).Name,
                                                      ex)
                 End Try
-				
-            Next            
+
+            Next
 
             Dim eAfterSerialize = New AfterSerializeObjectEventArgs(obj, type, hashTable, context)
             context.Serializer.DoAfterSerializeObject(eAfterSerialize)
@@ -783,7 +783,7 @@ Public Class Serializer
             End If
 
             ' Allow for the field to be set directly instead of the Setter when possible
-            Select Case setterHandling 
+            Select Case setterHandling
                 Case SetterHandlingEnum.Setter
                     If Not prop.IsReadOnly Then
                         SetPropertyValue(prop, resultObj, val)
@@ -801,7 +801,7 @@ Public Class Serializer
             End Select
         End If
     End Sub
-	
+
     Private Shared Sub SetPropertyValue(prop As ComponentModel.PropertyDescriptor, obj As Object, val As Object)
         prop.SetValue(obj, val)
     End Sub
@@ -825,16 +825,22 @@ Public Class Serializer
     Private Shared Function DefaultReferenceResolver(ByVal context As DeserializationContext, ByVal reference As ReferenceToResolve) As Boolean
         If context.SerializedObjects.ContainsKey(reference.Reference) Then
             Dim transformedReference As Object
-            If reference.PropInfo.PropertyType.IsAssignableFrom(context.SerializedObjects(reference.Reference).Result.GetType()) Then
+            If reference.Index > -1 Then
                 transformedReference = context.SerializedObjects(reference.Reference).Result
-            Else
-                transformedReference = TransformHashTable(context.SerializedObjects(reference.Reference).Origin, reference.PropInfo.PropertyType, True, reference.Obj, reference.PropInfo, context)
-            End If
 
-            SetProperty(context,
-                        reference.Obj,
-                        reference.PropInfo,
-                        transformedReference)
+                DirectCast(reference.Obj, Object())(reference.Index) = transformedReference
+            Else
+                If reference.PropInfo.PropertyType.IsAssignableFrom(context.SerializedObjects(reference.Reference).Result.GetType()) Then
+                    transformedReference = context.SerializedObjects(reference.Reference).Result
+                Else
+                    transformedReference = TransformHashTable(context.SerializedObjects(reference.Reference).Origin, reference.PropInfo.PropertyType, True, reference.Obj, reference.PropInfo, context)
+                End If
+
+                SetProperty(context,
+                            reference.Obj,
+                            reference.PropInfo,
+                            transformedReference)
+            End If
 
             Return True
         Else
@@ -882,7 +888,7 @@ Public Class Serializer
 
             Dim val = DeserializeStream(context, targetType, value, delimiter)
 
-			' When the only element is an empty string this is assumed to be an empty array and so no elements are added.
+            ' When the only element is an empty string this is assumed to be an empty array and so no elements are added.
             If Not (delimiter = "]" AndAlso TypeOf val Is String AndAlso String.IsNullOrEmpty(CStr(val))) Then
                 arrayList.Add(val)
             End If
@@ -911,7 +917,7 @@ Public Class Serializer
                     Else
                         arrInst.SetValue(val, j)
                     End If
-                Catch 
+                Catch
                     Throw
                 End Try
             Next
@@ -935,7 +941,7 @@ Public Class Serializer
                 Dim key = DeserializeValue(context, GetType(Object), value, delimiter).ToString().Trim(""""c)
 
                 ReadUntilNextDelimiter(context.Stream, value, delimiter)
-                
+
                 Dim valType As Type = GetType(Object)
                 If targetType IsNot Nothing Then
                     Dim valProp = targetType.GetProperty(key)
