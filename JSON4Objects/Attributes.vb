@@ -16,3 +16,15 @@ Public Class Pseudonym
         Me.Pseudonym = pseudonym
     End Sub
 End Class
+
+<AttributeUsage(AttributeTargets.Property Or AttributeTargets.Field, AllowMultiple:=False, Inherited:=True)>
+Public Class Setter
+    Inherits Attribute
+
+    Public Sub New(tSetterHandling As JSON4Objects.Serializer.SetterHandlingEnum)
+        Me.SetterHandling = tSetterHandling
+    End Sub
+
+    Public Property SetterHandling As JSON4Objects.Serializer.SetterHandlingEnum
+
+End Class

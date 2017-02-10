@@ -14,6 +14,7 @@ Public Class Serializer
     Public Property PrettyFormating As Boolean = True
     Public Property AdvancedSerialization As Boolean = True
     Public Property IgnoreAttributeTypes As Type() = {GetType(Ignore)}
+    Public Property SetterAttributeTypes As Type() = {GetType(Setter)}
 
     Private Const TrueString = "true"
     Private Const FalseString = "false"
@@ -738,8 +739,23 @@ Public Class Serializer
             context.Serializer.DoTransformObject(e)
             If e.Handled Then val = e.Val
 
+            ' The settter mode may be set on the property
+            Dim setterHandling = context.Serializer.SetterHandling
+
+            Dim setterAttr = (From atr In prop.Attributes
+                              From tp In context.Serializer.SetterAttributeTypes
+                              Where tp.IsAssignableFrom(atr.GetType())
+                              Select atr).FirstOrDefault
+
+            If setterAttr IsNot Nothing Then
+                Dim setProp = setterAttr.GetType().GetProperty("SetterHandling")
+                If setProp IsNot Nothing Then
+                    setterHandling = DirectCast(setProp.GetValue(setterAttr, Nothing), SetterHandlingEnum)
+                End If
+            End If
+
             ' Allow for the field to be set directly instead of the Setter when possible
-            Select Case context.Serializer.SetterHandling
+            Select Case setterHandling 
                 Case SetterHandlingEnum.Setter
                     If Not prop.IsReadOnly Then
                         SetPropertyValue(prop, resultObj, val)
