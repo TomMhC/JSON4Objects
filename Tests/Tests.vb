@@ -1,5 +1,15 @@
 ﻿Imports System.Text
 
+Namespace Data
+
+    Public Class Person
+        Public Property Name As String
+        Public Property PreName As String
+        Public Property Job As String
+    End Class
+
+End Namespace
+
 <TestClass()>
 Public Class Tests
 
@@ -42,16 +52,6 @@ Public Class Tests
         Return True
 
     End Function
-
-#End Region
-
-#Region "Data"
-
-    Public Class Person
-        Public Property Name As String
-        Public Property PreName As String
-        Public Property Job As String
-    End Class
 
 #End Region
 
@@ -156,7 +156,7 @@ Public Class Tests
     Public Sub TestSimpleTypeObject()
 
         Using ms As New IO.MemoryStream
-            Dim obj1 = New Person With {.Name = "Caesar", .PreName = "Julius", .Job = "Emperor"}
+            Dim obj1 = New Data.Person With {.Name = "Caesar", .PreName = "Julius", .Job = "Emperor"}
 
             Dim ser As New JSON4Objects.Serializer()
             ser.AdvancedSerialization = False ' Make sure we don't get confused with Id or Type information
@@ -175,7 +175,7 @@ Public Class Tests
     Public Sub TestSimpleTypeObjectComparisson()
 
         Using ms As New IO.MemoryStream
-            Dim obj1 = New Person With {.Name = "Caesar", .PreName = "Julius", .Job = "Emperor"}
+            Dim obj1 = New Data.Person With {.Name = "Caesar", .PreName = "Julius", .Job = "Emperor"}
 
             Dim ser As New JSON4Objects.Serializer()
             ser.Serialize(ms, obj1)
@@ -183,7 +183,7 @@ Public Class Tests
             ms.Seek(0, IO.SeekOrigin.Begin)
 
             Dim deSer As New JSON4Objects.Serializer()
-            Dim obj2 = deSer.Deserialize(Of Person)(ms)
+            Dim obj2 = deSer.Deserialize(Of Data.Person)(ms)
 
             Assert.IsTrue(CompareEquality(New List(Of Object), obj1, obj2))
         End Using
