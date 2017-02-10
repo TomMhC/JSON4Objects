@@ -45,6 +45,12 @@ Public Class Serializer
         RaiseEvent BeforeSerialize(e)
     End Sub
 
+    Public Event AfterSerializeObject(e As AfterSerializeObjectEventArgs)
+
+    Public Sub DoAfterSerializeObject(e As AfterSerializeObjectEventArgs)
+        RaiseEvent AfterSerializeObject(e)
+    End Sub
+
     Public Event HydrateObject(e As HydrateObjectEventArgs)
 
     Friend Sub DoHydrateObject(e As HydrateObjectEventArgs)
@@ -318,7 +324,10 @@ Public Class Serializer
                                                      props(i).Name,
                                                      ex)
                 End Try
-            Next
+            Next            
+
+            Dim eAfterSerialize = New AfterSerializeObjectEventArgs(obj, type, hashTable, context)
+            context.Serializer.DoAfterSerializeObject(eAfterSerialize)
 
             Dim childObjectsSerializedOnBranch As New Dictionary(Of Object, String)
             For Each kvp In objectsSerializedOnBranch

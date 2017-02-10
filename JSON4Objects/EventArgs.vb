@@ -163,3 +163,45 @@ Public Class ObjectDeserializedEventArgs
     End Sub
 
 End Class
+
+''' <summary>
+''' Allows for last minute manipulation of the HashTable created representing complex objects
+''' </summary>
+Public Class AfterSerializeObjectEventArgs
+
+    Private _hashTable As Hashtable
+    ''' <summary>
+    ''' The hashtable representing the object
+    ''' </summary>
+    Public ReadOnly Property HashTable As Hashtable
+        Get
+            Return _hashTable
+        End Get
+    End Property
+
+    Private _objectType As Type
+    ''' <summary>
+    ''' Type of the object from which the property is serialized.
+    ''' </summary>
+    Public ReadOnly Property ObjectType As Type
+        Get
+            Return _objectType
+        End Get
+    End Property
+
+    ''' <summary>
+    ''' The object from which the property is serialized.
+    ''' </summary>
+    Public Property Obj As Object
+
+    Public Property Context As SerializationContext
+
+    Public Sub New(obj As Object, objectType As Type, hashTable As Hashtable,
+                   context As SerializationContext)
+        _Obj = obj
+        _objectType = objectType
+        _hashTable = hashTable
+        _Context = context
+    End Sub
+
+End Class
