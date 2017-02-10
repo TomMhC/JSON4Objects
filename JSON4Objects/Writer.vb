@@ -18,14 +18,20 @@ Public Class FileWriter
 
     Public Sub New(stream As IO.Stream)
         _stream = stream
-        If stream IsNot Nothing Then _streamWriter = New IO.StreamWriter(_Stream, System.Text.Encoding.Unicode)
+        If stream IsNot Nothing Then _streamWriter = New IO.StreamWriter(_Stream, System.Text.Encoding.UTF8)
     End Sub
 
     Public Sub Write(val As String) Implements IWriter.Write
-        _sb.Append(val)
-        If _sb.Length > 10000 Then
+        If val.Length > 10000 Then
             If _streamWriter IsNot Nothing Then _streamWriter.Write(_sb.ToString())
+            If _streamWriter IsNot Nothing Then _streamWriter.Write(val)
             _sb.Clear()
+        Else
+            _sb.Append(val)
+            If _sb.Length > 10000 Then
+                If _streamWriter IsNot Nothing Then _streamWriter.Write(_sb.ToString())
+                _sb.Clear()
+            End If
         End If
     End Sub
 
@@ -75,7 +81,7 @@ Public Class InMemoryWriter
 
     Public Sub Flush() Implements IWriter.Flush
         If _Stream IsNot Nothing Then
-            Dim sw As New IO.StreamWriter(_Stream, System.Text.Encoding.Unicode)
+            Dim sw As New IO.StreamWriter(_Stream, System.Text.Encoding.UTF8)
             sw.Write(_sb.ToString())
             _sb.Clear()
             sw.Close()
