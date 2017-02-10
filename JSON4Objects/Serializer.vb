@@ -580,6 +580,9 @@ Public Class Serializer
         ' Finally we can rest assured this is an object we want to deserialize ourselves
         Dim e As New NewInstanceEventArgs(context, resultType, hashTable)
         context.Serializer.DoNewInstance(e)
+
+        If e.Cancel Then Return Nothing
+
         Try
             If e.Handled Then
                 resultObj = e.NewObj

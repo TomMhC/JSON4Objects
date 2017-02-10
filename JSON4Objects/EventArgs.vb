@@ -138,6 +138,8 @@ Public Class NewInstanceEventArgs
 
     Public Property Handled As Boolean = False
 
+    Public Property Cancel As Boolean = False
+
     Public Property Context As DeserializationContext
 
     Public Property TargetType As Type
