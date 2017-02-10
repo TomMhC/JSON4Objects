@@ -882,6 +882,7 @@ Public Class Serializer
 
             Dim val = DeserializeStream(context, targetType, value, delimiter)
 
+			' When the only element is an empty string this is assumed to be an empty array and so no elements are added.
             If Not (delimiter = "]" AndAlso TypeOf val Is String AndAlso String.IsNullOrEmpty(CStr(val))) Then
                 arrayList.Add(val)
             End If
