@@ -371,7 +371,7 @@ Public Class Serializer
 
         ElseIf TypeOf obj Is DateTime Then
             context.Stream.Write("""")
-            context.Stream.Write(DirectCast(obj, DateTime).ToString("yyyy/MM/dd HH:mm:ss.ffff"))
+            context.Stream.Write(DirectCast(obj, DateTime).ToUniversalTime().ToString("yyyy/MM/dd HH:mm:ss.ffff"))
             context.Stream.Write("""")
 
         ElseIf Array.IndexOf({GetType(Int32), GetType(Int64), GetType(Double), GetType(Int16), GetType(Single), GetType(Decimal), GetType(Byte), GetType(SByte), GetType(UInt32), GetType(UInt64), GetType(UInt16)}, type) > -1 Then
@@ -987,7 +987,7 @@ Public Class Serializer
         If value IsNot Nothing AndAlso
             DateTime.TryParse(value.ToString().Trim(""""c),
                               Globalization.CultureInfo.InvariantCulture,
-                              Globalization.DateTimeStyles.AssumeLocal,
+                              Globalization.DateTimeStyles.AssumeUniversal,
                               dte) Then
             Return dte
         Else
