@@ -712,7 +712,7 @@ Public Class Serializer
             val = CBool(ParseBoolean(val))
 
         ElseIf propType.IsEnum Then
-            val = CInt(ParseNumber(val))
+            val = TransformDeserializedString(context, resultObj, propType.GetEnumUnderlyingType, prop, val)
 
         ElseIf propType Is GetType(Byte()) Then
             val = Convert.FromBase64String(CStr(val))
