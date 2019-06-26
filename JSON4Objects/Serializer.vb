@@ -133,7 +133,7 @@ Public Class Serializer
     Public Shared Function FromJSonString(str As String) As String
 
         Dim strlim = str.Length - 1
-        Dim sb As New System.Text.StringBuilder()
+        Dim sb As New System.Text.StringBuilder(CInt(strlim / 2))
 
         For i As Integer = 0 To strlim
             If i > strlim Then Exit For
