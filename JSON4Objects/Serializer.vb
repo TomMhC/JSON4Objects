@@ -342,11 +342,16 @@ Public Class Serializer
             Dim props = GetPropertiesFor(context, type)
             For i As Integer = 0 To props.Count - 1
                 Try
-                    Dim e = New BeforeSerializeEventArgs(props(i), type,
-                                                        obj, props(i).GetValue(obj),
+                    Dim eCancel = False
+                    Dim eVal = props(i).GetValue(obj)
+                    If context.Serializer.BeforeSerializeEvent IsNot Nothing Then
+                        Dim e = New BeforeSerializeEventArgs(props(i), type,
+                                                        obj, eVal,
                                                         context)
-                    context.Serializer.DoBeforeSerialize(e)
-                    If Not e.Cancel Then hashTable.Add(props(i).Name, e.Val)
+                        context.Serializer.DoBeforeSerialize(e)
+                        eCancel = e.Cancel
+                    End If
+                    If Not eCancel Then hashTable.Add(props(i).Name, eVal)
                 Catch ex As Exception
                     Throw New SerializationException(String.Format("Invalid BeforeSererialize for property {0}", props(i).Name),
                                                      props(i).Name,
@@ -355,8 +360,10 @@ Public Class Serializer
 
             Next
 
-            Dim eAfterSerialize = New AfterSerializeObjectEventArgs(obj, type, hashTable, context)
-            context.Serializer.DoAfterSerializeObject(eAfterSerialize)
+            If context.Serializer.AfterSerializeObjectEvent IsNot Nothing Then
+                Dim eAfterSerialize = New AfterSerializeObjectEventArgs(obj, type, hashTable, context)
+                context.Serializer.DoAfterSerializeObject(eAfterSerialize)
+            End If
 
             Dim childObjectsSerializedOnBranch As New Dictionary(Of Object, String)
             For Each kvp In objectsSerializedOnBranch
@@ -605,14 +612,22 @@ Public Class Serializer
         If resultType Is Nothing Then Return hashTable
 
         ' Finally we can rest assured this is an object we want to deserialize ourselves
-        Dim e As New NewInstanceEventArgs(context, resultType, hashTable)
-        context.Serializer.DoNewInstance(e)
+        Dim eCancel = False
+        Dim eHandled = False
+        Dim eNewObj = Nothing
+        If context.Serializer.NewInstanceEvent IsNot Nothing Then
+            Dim e As New NewInstanceEventArgs(context, resultType, hashTable)
+            context.Serializer.DoNewInstance(e)
+            eCancel = e.Cancel
+            eHandled = e.Handled
+            eNewObj = e.NewObj
+        End If
 
-        If e.Cancel Then Return Nothing
+        If eCancel Then Return Nothing
 
         Try
-            If e.Handled Then
-                resultObj = e.NewObj
+            If eHandled Then
+                resultObj = eNewObj
             Else
                 resultObj = System.Runtime.Serialization.FormatterServices.GetUninitializedObject(resultType)
             End If
@@ -646,7 +661,9 @@ Public Class Serializer
 
         If hashTable.ContainsKey("$id") Then
             context.SerializedObjects.Add(hashTable("$id").ToString(), New DeserializedObject(resultObj, hashTable))
-            context.Serializer.DoOnDeserializedObject(resultObj)
+            If context.Serializer.OnDeserializedObjectEvent IsNot Nothing Then
+                context.Serializer.DoOnDeserializedObject(resultObj)
+            End If
         End If
 
         Return resultObj
@@ -704,7 +721,7 @@ Public Class Serializer
 
     Private Shared Function TransformDeserializedString(ByVal context As DeserializationContext,
                                                         ByRef resultObj As Object,
-                                                        Byval propType As Type,
+                                                        ByVal propType As Type,
                                                         ByVal prop As System.ComponentModel.PropertyDescriptor,
                                                         ByVal val As Object) As Object
 
@@ -787,13 +804,21 @@ Public Class Serializer
 
         val = TransformDeserializedString(context, resultObj, propType, prop, val)
 
-        Dim eh As New HydrateObjectEventArgs(resultObj, val, prop, context)
-        context.Serializer.DoHydrateObject(eh)
-        If Not eh.Handled AndAlso (val Is Nothing OrElse propType.IsValueType OrElse propType.IsAssignableFrom(val.GetType())) Then
+        Dim ehHandled = False
+
+        If context.Serializer.HydrateObjectEvent IsNot Nothing Then
+            Dim eh As New HydrateObjectEventArgs(resultObj, val, prop, context)
+            context.Serializer.DoHydrateObject(eh)
+            ehHandled = eh.Handled
+        End If
+
+        If Not ehHandled AndAlso (val Is Nothing OrElse propType.IsValueType OrElse propType.IsAssignableFrom(val.GetType())) Then
             ' The user may choose to do their own transformation and skip setting entirely
-            Dim e As New TransformObjectEventArgs(resultObj, val)
-            context.Serializer.DoTransformObject(e)
-            If e.Handled Then val = e.Val
+            If context.Serializer.TransformObjectEvent IsNot Nothing Then
+                Dim e As New TransformObjectEventArgs(resultObj, val)
+                context.Serializer.DoTransformObject(e)
+                If e.Handled Then val = e.Val
+            End If
 
             ' The settter mode may be set on the property
             Dim setterHandling = context.Serializer.SetterHandling
@@ -995,7 +1020,9 @@ Public Class Serializer
         Loop Until delimiter = "}"
 
         If Not hashTable.ContainsKey("$ref") Then
-            context.Serializer.DoObjectDeserialized(New ObjectDeserializedEventArgs(context, hashTable))
+            If context.Serializer.ObjectDeserializedEvent IsNot Nothing Then
+                context.Serializer.DoObjectDeserialized(New ObjectDeserializedEventArgs(context, hashTable))
+            End If
         End If
 
         ReadUntilNextDelimiter(context.Stream, value, delimiter)
