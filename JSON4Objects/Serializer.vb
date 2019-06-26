@@ -529,7 +529,7 @@ Public Class Serializer
             If openQuote OrElse Array.IndexOf(_SpecialChars, chr) = -1 Then
                 sb.Append(chr)
             End If
-            escapeChar = (prevChr = "\")
+            escapeChar = Not escapeChar AndAlso (prevChr = "\")
             prevChr = chr
             If chr = """" AndAlso Not escapeChar Then openQuote = Not openQuote
         Loop While Not sr.EndOfStream AndAlso (openQuote OrElse (Not escapeChar AndAlso Array.IndexOf(_SpecialChars, chr) = -1))
