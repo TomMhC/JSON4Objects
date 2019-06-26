@@ -197,7 +197,7 @@ Public Class Serializer
         Try
             Dim sw = New FileWriter(stream)
             Dim context As New SerializationContext(Me, sw)
-            Serialize(stream, obj, context)
+            SerializeObject(context, obj, New Dictionary(Of Object, String))
             sw.Flush()
         Catch
             Throw
@@ -205,6 +205,7 @@ Public Class Serializer
 
     End Sub
 
+    <Obsolete()>
     Public Sub Serialize(stream As IO.Stream, obj As Object, context As SerializationContext)
 
         Try
@@ -214,6 +215,19 @@ Public Class Serializer
         End Try
 
     End Sub
+
+    Public Function Serialize(obj As Object) As String
+
+        Try
+            Dim wtr = New StringWriter()
+            Dim context As New SerializationContext(Me, wtr)
+            SerializeObject(context, obj, New Dictionary(Of Object, String))
+            Return wtr.GetResult()
+        Catch
+            Throw
+        End Try
+
+    End Function
 
     Private Shared Sub WriteEmptyLine(context As SerializationContext)
         If context.Serializer.PrettyFormating Then context.Stream.WriteLine()

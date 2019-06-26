@@ -1,10 +1,13 @@
-﻿Public Interface IWriter
+﻿Imports System.IO
+Imports JSON4Objects
+
+Public Interface IWriter
 
     Sub WriteString(val As String)
     Sub Write(val As String)
     Sub WriteLine()
     Sub Flush()
-    Property Stream As IO.Stream
+    'Property Stream As IO.Stream
 
 End Interface
 
@@ -14,10 +17,10 @@ Public Class FileWriter
     Private _sb As New Text.StringBuilder()
     Private _streamWriter As IO.StreamWriter
 
-    Public Property Stream As IO.Stream Implements IWriter.Stream
+    Public Property Stream As IO.Stream 'Implements IWriter.Stream
 
     Public Sub New(stream As IO.Stream)
-        _stream = stream
+        _Stream = stream
         If stream IsNot Nothing Then _streamWriter = New IO.StreamWriter(_Stream, System.Text.Encoding.UTF8)
     End Sub
 
@@ -61,7 +64,7 @@ Public Class InMemoryWriter
 
     Private _sb As New Text.StringBuilder()
 
-    Public Property Stream As IO.Stream Implements IWriter.Stream
+    Public Property Stream As IO.Stream 'Implements IWriter.Stream
 
     Public Sub New(stream As IO.Stream)
         If stream IsNot Nothing Then _Stream = stream
@@ -88,4 +91,32 @@ Public Class InMemoryWriter
         End If
     End Sub
 
+End Class
+
+Public Class StringWriter
+    Implements IWriter
+
+    Public _sb As New Text.StringBuilder()
+
+    'Public Property Stream As Stream Implements IWriter.Stream
+
+    Public Sub WriteString(val As String) Implements IWriter.WriteString
+        WriteJSonString(_sb, val)
+    End Sub
+
+    Public Sub Write(val As String) Implements IWriter.Write
+        _sb.Append(val)
+    End Sub
+
+    Public Sub WriteLine() Implements IWriter.WriteLine
+        _sb.AppendLine()
+    End Sub
+
+    Public Sub Flush() Implements IWriter.Flush
+
+    End Sub
+
+    Public Function GetResult() As String
+        Return _sb.ToString()
+    End Function
 End Class
