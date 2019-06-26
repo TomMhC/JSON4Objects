@@ -493,7 +493,7 @@ Public Class Serializer
 
     Public Function DeserializeDateTime(stream As IO.Stream) As DateTime
 
-        Return CDate(ParseDateTime(Deserialize(Of DateTime)(stream)))
+        Return CDate(Deserialize(Of DateTime)(stream))
 
     End Function
 
