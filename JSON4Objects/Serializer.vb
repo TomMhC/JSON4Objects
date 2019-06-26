@@ -238,7 +238,7 @@ Public Class Serializer
 
         If context.Serializer.PrettyFormating Then
             context.Stream.WriteLine()
-            context.Stream.Write(New String(" "c, context.Indent))
+            context.Serializer.WriteIndent(context)
         End If
 
         context.Stream.Write(value)
@@ -276,6 +276,20 @@ Public Class Serializer
         WriteLine(context, "]")
     End Sub
 
+    Private _indentStrings As String() = {""}
+
+    Private _maxIndent As Integer = 0
+
+    Private Sub WriteIndent(context As SerializationContext)
+        If context.Indent > _maxIndent Then
+            ReDim Preserve _indentStrings(context.Indent)
+            _indentStrings(context.Indent) = New String(" "c, context.Indent)
+            _maxIndent = context.Indent
+        End If
+
+        If context.Serializer.PrettyFormating Then context.Stream.Write(_indentStrings(context.Indent))
+    End Sub
+
     Private Shared Sub WriteHashTable(ByVal context As SerializationContext,
                                       ByVal list As Hashtable,
                                       ByVal type As Type,
@@ -288,7 +302,7 @@ Public Class Serializer
         If list.Count > 0 Then
 
             WriteEmptyLine(context)
-            context.Stream.Write(New String(" "c, context.Indent))
+            context.Serializer.WriteIndent(context)
             context.Stream.Write("""")
             context.Stream.Write(list.Keys(0).ToString())
             context.Stream.Write(""" : ")
@@ -297,7 +311,7 @@ Public Class Serializer
             For i As Integer = 1 To list.Count - 1
                 context.Stream.Write(",")
                 WriteEmptyLine(context)
-                context.Stream.Write(New String(" "c, context.Indent))
+                context.Serializer.WriteIndent(context)
                 context.Stream.Write("""")
                 context.Stream.Write(list.Keys(i).ToString())
                 context.Stream.Write(""" : ")
