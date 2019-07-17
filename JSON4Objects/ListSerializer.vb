@@ -14,12 +14,18 @@
     Public Function DeserializeObject(ByVal context As DeserializationContext, targetType As Type, val As Object,
                                       obj As Object, prop As ComponentModel.PropertyDescriptor) As Object Implements ICustomSerializer.DeserializeObject
 
+        Dim genericType As Type = Nothing
+
         For Each item In DirectCast(val, IList)
             If TypeOf item Is Hashtable AndAlso DirectCast(item, Hashtable).Count = 1 AndAlso DirectCast(item, Hashtable).ContainsKey("$type") Then
                 targetType = Type.GetType(DirectCast(item, Hashtable)("$type").ToString())
                 Exit For
             End If
         Next
+
+        If targetType.IsGenericType Then
+            genericType = targetType.GetGenericArguments(0)
+        End If
 
         Dim resultObj = DirectCast(Activator.CreateInstance(targetType), IList)
 
@@ -49,7 +55,12 @@
                                                                                           AddressOf ResolveReference))
                     End If
                 Else
-                    resultObj.Add(item)
+                    If genericType IsNot Nothing Then
+                        Dim tVal = Serializer.TransformDeserializedString(context, Nothing, genericType, Nothing, item)
+                        resultObj.Add(tVal)
+                    Else
+                        resultObj.Add(item)
+                    End If
                 End If
             End If
         Next

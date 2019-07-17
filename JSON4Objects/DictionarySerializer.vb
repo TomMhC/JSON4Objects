@@ -35,20 +35,23 @@
     Public Function DeserializeObject(ByVal context As DeserializationContext, targetType As Type, val As Object,
                                       obj As Object, prop As System.ComponentModel.PropertyDescriptor) As Object Implements ICustomSerializer.DeserializeObject
 
+        Dim genericKeyType As Type = Nothing, genericValueType As Type = Nothing
+
         Dim resultObj As IDictionary
 
         Dim hashTable = DirectCast(val, Hashtable)
 
         If hashTable.ContainsKey("$type") Then
             Dim resultType = Type.GetType(hashTable("$type").ToString())
-            If resultType IsNot Nothing Then
-                resultObj = DirectCast(Activator.CreateInstance(resultType, True), IDictionary)
-            Else
-                resultObj = DirectCast(Activator.CreateInstance(targetType, True), IDictionary)
-            End If
-        Else
-            resultObj = DirectCast(Activator.CreateInstance(targetType, True), IDictionary)
+            targetType = resultType
         End If
+
+        If targetType.IsGenericType Then
+            genericKeyType = targetType.GetGenericArguments(0)
+            genericValueType = targetType.GetGenericArguments(1)
+        End If
+
+        resultObj = DirectCast(Activator.CreateInstance(targetType, True), IDictionary)
 
         For i As Integer = 0 To hashTable.Count - 1
             If Not hashTable.Keys(i).ToString() = "$type" Then
@@ -60,6 +63,9 @@
                     Dim e As New TransformObjectEventArgs(resultObj, transformedKey)
                     context.Serializer.DoTransformObject(e)
                     If e.Handled Then transformedKey = e.Val
+                ElseIf genericKeyType IsNot Nothing Then
+                    Dim key = hashTable.Keys(i).ToString()
+                    transformedKey = Serializer.TransformDeserializedString(context, Nothing, genericKeyType, Nothing, key)
                 Else
                     Dim key = hashTable.Keys(i).ToString()
                     transformedKey = Serializer.FromJSonString(key)
@@ -73,7 +79,9 @@
                     If e.Handled Then transformedVal = e.Val
                 Else
                     Dim hval = hashTable.Values(i)
-                    If TypeOf hval Is String Then
+                    If genericValueType IsNot Nothing Then
+                        transformedVal = Serializer.TransformDeserializedString(context, Nothing, genericValueType, Nothing, hval)
+                    ElseIf TypeOf hval Is String Then
                         transformedVal = Serializer.FromJSonString(hval.ToString().Trim(""""c))
                     Else
                         transformedVal = hval
@@ -88,11 +96,7 @@
                                                                                       targetType,
                                                                                       AddressOf ResolveReference))
                 Else
-                    Try
-                        resultObj.Add(transformedKey, transformedVal)
-                    Catch
-                        Throw
-                    End Try
+                    resultObj.Add(transformedKey, transformedVal)
                 End If
             End If
         Next

@@ -719,11 +719,11 @@ Public Class Serializer
         Return Nothing
     End Function
 
-    Private Shared Function TransformDeserializedString(ByVal context As DeserializationContext,
-                                                        ByRef resultObj As Object,
-                                                        ByVal propType As Type,
-                                                        ByVal prop As System.ComponentModel.PropertyDescriptor,
-                                                        ByVal val As Object) As Object
+    Public Shared Function TransformDeserializedString(ByVal context As DeserializationContext,
+                                                       ByRef resultObj As Object,
+                                                       ByVal propType As Type,
+                                                       ByVal prop As System.ComponentModel.PropertyDescriptor,
+                                                       ByVal val As Object) As Object
 
         If val Is Nothing Then
             ' Save the object as is

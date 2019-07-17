@@ -6,7 +6,13 @@ Namespace Data
         Public Property Name As String
         Public Property PreName As String
         Public Property Job As String
+        Public Property Gender As Gender
     End Class
+
+    Public Enum Gender
+        Male
+        Female
+    End Enum
 
 End Namespace
 
@@ -165,7 +171,7 @@ Public Class Tests
             ms.Seek(0, IO.SeekOrigin.Begin)
 
             Using sr = New IO.StreamReader(ms)
-                Assert.AreEqual(sr.ReadToEnd().Replace(" ", "").Replace(Environment.NewLine, ""), "{""PreName"":""Julius"",""Job"":""Emperor"",""Name"":""Caesar""}")
+                Assert.AreEqual(sr.ReadToEnd().Replace(" ", "").Replace(Environment.NewLine, ""), "{""PreName"":""Julius"",""Job"":""Emperor"",""Name"":""Caesar"",""Gender"":0}")
             End Using
         End Using
 
@@ -209,7 +215,7 @@ Public Class Tests
 
     End Sub
 
-    <TestMethod()> _
+    <TestMethod()>
     Public Sub TestDeepAnonymousType()
 
         Using ms As New IO.MemoryStream
@@ -261,6 +267,29 @@ Public Class Tests
 #Region "Custom Serializers"
 
     <TestMethod()>
+    Public Sub TestList()
+
+        Using ms As New IO.MemoryStream
+            Dim obj1 = New With {.FamousBattles = New List(Of String)}
+            obj1.FamousBattles.Add("Battle of Ravenna")
+            obj1.FamousBattles.Add("Battle of Lacus Benacus")
+            obj1.FamousBattles.Add("Battle of Carthage")
+
+            Dim ser As New JSON4Objects.Serializer()
+            ser.Serialize(ms, obj1)
+
+            ms.Seek(0, IO.SeekOrigin.Begin)
+
+            Dim deSer As New JSON4Objects.Serializer()
+            Dim obj2 = deSer.Deserialize(ms)
+
+            Assert.IsTrue(CompareEquality(New List(Of Object), obj1, obj2))
+
+        End Using
+
+    End Sub
+
+    <TestMethod()>
     Public Sub TestDictionary()
 
         Using ms As New IO.MemoryStream
@@ -268,6 +297,75 @@ Public Class Tests
             obj1.FamousBattles.Add("Battle of Ravenna", "Bonifatius")
             obj1.FamousBattles.Add("Battle of Lacus Benacus", "Claudius II")
             obj1.FamousBattles.Add("Battle of Carthage", "Maximinus ")
+
+            Dim ser As New JSON4Objects.Serializer()
+            ser.Serialize(ms, obj1)
+
+            ms.Seek(0, IO.SeekOrigin.Begin)
+
+            Dim deSer As New JSON4Objects.Serializer()
+            Dim obj2 = deSer.Deserialize(ms)
+
+            Assert.IsTrue(CompareEquality(New List(Of Object), obj1, obj2))
+
+        End Using
+
+    End Sub
+
+    <TestMethod()>
+    Public Sub TestListOfValueObject()
+
+        Using ms As New IO.MemoryStream
+            Dim obj1 = New With {.Numbers = New List(Of Integer)}
+            obj1.Numbers.Add(1)
+            obj1.Numbers.Add(2)
+            obj1.Numbers.Add(3)
+
+            Dim ser As New JSON4Objects.Serializer()
+            ser.Serialize(ms, obj1)
+
+            ms.Seek(0, IO.SeekOrigin.Begin)
+
+            Dim deSer As New JSON4Objects.Serializer()
+            Dim obj2 = deSer.Deserialize(ms)
+
+            Assert.IsTrue(CompareEquality(New List(Of Object), obj1, obj2))
+
+        End Using
+
+    End Sub
+
+    <TestMethod()>
+    Public Sub TestListOfEnum()
+
+        Using ms As New IO.MemoryStream
+            Dim obj1 = New With {.Numbers = New List(Of Data.Gender)}
+            obj1.Numbers.Add(Data.Gender.Male)
+            obj1.Numbers.Add(Data.Gender.Female)
+            obj1.Numbers.Add(Data.Gender.Male)
+
+            Dim ser As New JSON4Objects.Serializer()
+            ser.Serialize(ms, obj1)
+
+            ms.Seek(0, IO.SeekOrigin.Begin)
+
+            Dim deSer As New JSON4Objects.Serializer()
+            Dim obj2 = deSer.Deserialize(ms)
+
+            Assert.IsTrue(CompareEquality(New List(Of Object), obj1, obj2))
+
+        End Using
+
+    End Sub
+
+    <TestMethod()>
+    Public Sub TestDictOfValueObject()
+
+        Using ms As New IO.MemoryStream
+            Dim obj1 = New With {.Numbers = New Dictionary(Of Integer, Double)}
+            obj1.Numbers.Add(1, 2)
+            obj1.Numbers.Add(2, 4)
+            obj1.Numbers.Add(3, 9)
 
             Dim ser As New JSON4Objects.Serializer()
             ser.Serialize(ms, obj1)
