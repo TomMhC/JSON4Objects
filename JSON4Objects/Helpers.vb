@@ -6,7 +6,10 @@
     Public Function GetTypeNameFor(t As Type) As String
         Dim args = t.GetGenericArguments()
         If args.Count = 0 Then
-            Return t.Namespace + "." + t.Name + ", " + t.Assembly.GetName().Name
+            Return _
+                t.Namespace +
+                "." + If(t.DeclaringType IsNot Nothing, $"{t.DeclaringType.Name}+", String.Empty) + t.Name +
+                ", " + t.Assembly.GetName().Name
         Else
             Dim sb As New System.Text.StringBuilder
 
