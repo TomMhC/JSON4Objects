@@ -1,4 +1,5 @@
 ﻿Imports System.Text
+Imports Microsoft.VisualStudio.TestTools.UnitTesting
 
 Namespace Data
 
@@ -7,6 +8,7 @@ Namespace Data
         Public Property PreName As String
         Public Property Job As String
         Public Property Gender As Gender
+        Public Property Age As Int32?
     End Class
 
     Public Enum Gender
@@ -48,7 +50,9 @@ Public Class Tests
             Dim val1 = p.GetValue(obj1, Nothing)
             Dim val2 = p2.GetValue(obj2, Nothing)
 
-            If p.PropertyType.IsValueType Then
+            If val1 Is Nothing Then
+                Return val2 Is Nothing
+            ElseIf p.PropertyType.IsValueType Then
                 If Not DirectCast(val1, IComparable).Equals(val2) Then Return False
             Else
                 If Not CompareEquality(objectsCompared, val1, val2) Then Return False
@@ -171,7 +175,12 @@ Public Class Tests
             ms.Seek(0, IO.SeekOrigin.Begin)
 
             Using sr = New IO.StreamReader(ms)
-                Assert.AreEqual(sr.ReadToEnd().Replace(" ", "").Replace(Environment.NewLine, ""), "{""PreName"":""Julius"",""Job"":""Emperor"",""Name"":""Caesar"",""Gender"":0}")
+                Dim rslt = sr.ReadToEnd().Replace(" ", "").Replace(Environment.NewLine, "")
+                Assert.IsTrue(rslt.Contains("""PreName"":""Julius"""))
+                Assert.IsTrue(rslt.Contains("""Job"":""Emperor"""))
+                Assert.IsTrue(rslt.Contains("""Name"":""Caesar"""))
+                Assert.IsTrue(rslt.Contains("""Age"":null"))
+                Assert.IsTrue(rslt.Contains("""Gender"":0"))
             End Using
         End Using
 
@@ -192,6 +201,30 @@ Public Class Tests
             Dim obj2 = deSer.Deserialize(Of Data.Person)(ms)
 
             Assert.IsTrue(CompareEquality(New List(Of Object), obj1, obj2))
+        End Using
+
+    End Sub
+
+    <TestMethod()>
+    Public Sub TestSimpleTypeObjectWithNullable()
+
+        Using ms As New IO.MemoryStream
+            Dim obj1 = New Data.Person With {.Name = "Caesar", .PreName = "Julius", .Job = "Emperor", .Age = 30}
+
+            Dim ser As New JSON4Objects.Serializer()
+            ser.AdvancedSerialization = False ' Make sure we don't get confused with Id or Type information
+            ser.Serialize(ms, obj1)
+
+            ms.Seek(0, IO.SeekOrigin.Begin)
+
+            Using sr = New IO.StreamReader(ms)
+                Dim rslt = sr.ReadToEnd().Replace(" ", "").Replace(Environment.NewLine, "")
+                Assert.IsTrue(rslt.Contains("""PreName"":""Julius"""))
+                Assert.IsTrue(rslt.Contains("""Job"":""Emperor"""))
+                Assert.IsTrue(rslt.Contains("""Name"":""Caesar"""))
+                Assert.IsTrue(rslt.Contains("""Age"":30"))
+                Assert.IsTrue(rslt.Contains("""Gender"":0"))
+            End Using
         End Using
 
     End Sub
@@ -382,5 +415,47 @@ Public Class Tests
     End Sub
 
 #End Region
+
+    <TestMethod()>
+    Public Sub TestDifferingTypes()
+
+        Using ms As New IO.MemoryStream
+            Dim monkey = New Animal With {.Species = Species.Mammal}
+
+            Dim ser As New JSON4Objects.Serializer()
+            ser.AdvancedSerialization = False
+            ser.SetterHandling = JSON4Objects.Serializer.SetterHandlingEnum.FieldAlways
+            ser.Serialize(ms, monkey)
+
+            ms.Seek(0, IO.SeekOrigin.Begin)
+
+            Dim deSer As New JSON4Objects.Serializer()
+            Dim monkey2 = deSer.Deserialize(Of Animal)(ms)
+
+            Assert.AreEqual(monkey.Species, monkey2.Species)
+
+        End Using
+
+    End Sub
+
+    Public Class Animal
+
+        Private _species As Species?
+        Public Property Species As Species
+            Get
+                Return _species.GetValueOrDefault(Species.Fish)
+            End Get
+            Set(value As Species)
+                _species = value
+            End Set
+        End Property
+
+    End Class
+
+    Public Enum Species
+        Fish
+        Mammal
+        Bird
+    End Enum
 
 End Class

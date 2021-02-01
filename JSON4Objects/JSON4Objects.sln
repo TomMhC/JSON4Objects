@@ -1,11 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30711.63
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "JSON4Objects", "JSON4Objects.vbproj", "{C08A43F7-B73D-4DAE-926D-033404587EDF}"
+Project("{778DAE3C-4631-46EA-AA77-85C1314464D9}") = "JSON4Objects", "JSON4Objects.vbproj", "{C08A43F7-B73D-4DAE-926D-033404587EDF}"
 EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Tests", "..\Tests\Tests.vbproj", "{061C35C3-7523-4FBC-91ED-3DD905D1F348}"
+Project("{778DAE3C-4631-46EA-AA77-85C1314464D9}") = "Tests", "..\Tests\Tests.vbproj", "{061C35C3-7523-4FBC-91ED-3DD905D1F348}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{DD667701-CAF5-4614-A171-5196F01EF52F}"
 	ProjectSection(SolutionItems) = preProject
@@ -47,6 +47,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8172836B-CF85-4864-846D-F0F4B124C784}
 	EndGlobalSection
 	GlobalSection(TestCaseManagementSettings) = postSolution
 		CategoryFile = JSON4Objects.vsmdi
